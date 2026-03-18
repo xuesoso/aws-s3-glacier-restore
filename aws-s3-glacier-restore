@@ -89,53 +89,56 @@ def get_matching_s3_keys_and_sizes(s3_url):
 
 
 def restore(to_restore, max_tries=10):
-    if max_tries < 1:
-        s_print("Maximum number of attempts at restoring the object exceeded")
-        return
     global destination_bucket
     key = to_restore['file']['key'].lstrip('/')
     bucket = to_restore['file']['bucket']
-    s_print("Restoring s3://{}/{}".format(bucket, key))
-    try:
-        if destination_bucket is not None:
-            boto3.client('s3') \
-                .restore_object(
-                Bucket=bucket, Key=key,
-                RestoreRequest={'OutputLocation': {
-                    'S3': {
-                        'BucketName': destination_bucket,
-                        'Prefix': key}},
-                    'GlacierJobParameters': {
-                        'Tier': to_restore['tier']}})
 
-        else:
-            if to_restore['days'] is None:
-                raise ValueError(
-                    "days_to_keep is required when destination_bucket is not set")
-            boto3.client('s3') \
-                .restore_object(
-                Bucket=bucket, Key=key,
-                RestoreRequest={'Days': to_restore['days'],
-                                'GlacierJobParameters': {
-                                    'Tier': to_restore['tier']}})
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'RestoreAlreadyInProgress':
-            s_print("Restore already in progress")
-        elif e.response['Error']['Code'] == 'InvalidObjectState':
-            s_print("Object's storage class is not GLACIER")
-        elif e.response['Error']['Code'] == \
-                'GlacierExpeditedRetrievalNotAvailable':
-            s_print("Expedited retrieval not available. Sleeping for 1 minute")
-            time.sleep(60)
-            restore(to_restore, max_tries - 1)
-        elif e.response['Error']['Code'] == 'OperationAborted':
-            s_print("Conflicting operation in progress. Retrying in 1 minute")
-            time.sleep(60)
-            restore(to_restore, max_tries - 1)
-        elif e.response['Error']['Code'] == 'NoSuchKey':
-            s_print("Unable to find S3 object key: {}".format(key))
-        else:
-            raise e
+    for attempt in range(max_tries):
+        s_print("Restoring s3://{}/{}".format(bucket, key))
+        try:
+            if destination_bucket is not None:
+                boto3.client('s3') \
+                    .restore_object(
+                    Bucket=bucket, Key=key,
+                    RestoreRequest={'OutputLocation': {
+                        'S3': {
+                            'BucketName': destination_bucket,
+                            'Prefix': key}},
+                        'GlacierJobParameters': {
+                            'Tier': to_restore['tier']}})
+
+            else:
+                if to_restore['days'] is None:
+                    raise ValueError(
+                        "days_to_keep is required when destination_bucket is not set")
+                boto3.client('s3') \
+                    .restore_object(
+                    Bucket=bucket, Key=key,
+                    RestoreRequest={'Days': to_restore['days'],
+                                    'GlacierJobParameters': {
+                                        'Tier': to_restore['tier']}})
+            return
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'RestoreAlreadyInProgress':
+                s_print("Restore already in progress")
+                return
+            elif error_code == 'InvalidObjectState':
+                s_print("Object's storage class is not GLACIER")
+                return
+            elif error_code == 'GlacierExpeditedRetrievalNotAvailable':
+                s_print("Expedited retrieval not available. Sleeping for 1 minute")
+                time.sleep(60)
+            elif error_code == 'OperationAborted':
+                s_print("Conflicting operation in progress. Retrying in 1 minute")
+                time.sleep(60)
+            elif error_code == 'NoSuchKey':
+                s_print("Unable to find S3 object key: {}".format(key))
+                return
+            else:
+                raise e
+
+    s_print("Maximum number of attempts at restoring the object exceeded")
 
 
 def check_status(to_check):
