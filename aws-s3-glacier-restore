@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import argparse
 import sys
 import time
 from multiprocessing.dummy import Pool as ThreadPool
-from six.moves import urllib
+import urllib.parse
 import threading
 import re
 
@@ -218,7 +217,7 @@ def restore_main(
                     "Glacier. For them restore isn't needed"
                     .format(not_on_glacier_count.value()))
         if missing:
-            to_restore = list(filter(lambda x: x != None, not_restored))
+            to_restore = list(filter(lambda x: x is not None, not_restored))
         else:
             return
 
@@ -306,7 +305,6 @@ if __name__ == '__main__':
              'files. Once you don\'t need them you can delete them from '
              'destination bucket.'
     )
-    # 40 threads from Mac (home network) results in 2K files restored per minute
     parser.add_argument(
         '-t',
         '--threads',

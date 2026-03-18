@@ -25,6 +25,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['six',
-                      'boto3>=1.9']
+    install_requires=['boto3>=1.9']
 )
