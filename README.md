@@ -50,7 +50,9 @@ optional arguments:
                         you'll need restored files. Once you don't need them
                         you can delete them from destination bucket.
   -t THREADS, --threads THREADS
-                        Number of threads to use. Default=40
+                        Number of threads to use. Default=1
+  -n TIER_NR, --tier_nr TIER_NR
+                        Optional parameter to set the tier level for restore (skips interactive prompt). 1=Expedited, 2=Standard, 3=Bulk.
   -s, --status_print    Just print status of files and how many of them are in
                         glacier and how many of them are restored already
   --profile PROFILE     Use a specific AWS profile from your credential file.
