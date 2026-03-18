@@ -109,6 +109,9 @@ def restore(to_restore, max_tries=10):
                         'Tier': to_restore['tier']}})
 
         else:
+            if to_restore['days'] is None:
+                raise ValueError(
+                    "days_to_keep is required when destination_bucket is not set")
             boto3.client('s3') \
                 .restore_object(
                 Bucket=bucket, Key=key,
