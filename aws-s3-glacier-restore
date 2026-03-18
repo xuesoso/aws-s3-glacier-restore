@@ -138,10 +138,10 @@ def check_status(to_check):
     bucket = to_check['file']['bucket']
     response = boto3.client('s3').head_object(Bucket=bucket, Key=key)
     path = "s3://" + bucket + "/" + key
-    if 'StorageClass' not in response \
-            or response['StorageClass'] not in ["GLACIER", "DEEP_ARCHIVE"]:
-        s_print("Object {} storageClass is not Glacier or Glacier Deep Archvie:"
-                " {}".format(path, response['StorageClass']))
+    storage_class = response.get('StorageClass', 'STANDARD')
+    if storage_class not in ["GLACIER", "DEEP_ARCHIVE"]:
+        s_print("Object {} storageClass is not Glacier or Glacier Deep Archive:"
+                " {}".format(path, storage_class))
         not_on_glacier_count.inc()
     else:
         if 'Restore' in response:
