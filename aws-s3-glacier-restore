@@ -12,6 +12,9 @@ import boto3
 from botocore.exceptions import ClientError
 
 destination_bucket = None
+s_print_lock = threading.Lock()
+restored_count = None
+not_on_glacier_count = None
 
 
 def s_print(*a, **b):
@@ -167,6 +170,12 @@ def restore_main(
         status_check,
         missing,
         tier_nr):
+    global restored_count, not_on_glacier_count
+
+    if restored_count is None:
+        restored_count = AtomicInteger()
+    if not_on_glacier_count is None:
+        not_on_glacier_count = AtomicInteger()
 
     pool = ThreadPool(number_of_threads)
 
@@ -262,8 +271,6 @@ def restore_main(
 
 
 if __name__ == '__main__':
-    s_print_lock = threading.Lock()
-
     parser = argparse.ArgumentParser(
         description='Utility script to restore files on AWS S3 that have '
                     'GLACIER storage class')
@@ -324,8 +331,8 @@ if __name__ == '__main__':
     )
 
     args = vars(parser.parse_args())
-    restored_count = AtomicInteger()
-    not_on_glacier_count = AtomicInteger()
+    restored_count = AtomicInteger()  # noqa: F841 - used as module global
+    not_on_glacier_count = AtomicInteger()  # noqa: F841 - used as module global
 
     if args['input_file'] is None and args['prefix'] is None:
         raise Exception("Must either specify input_file or prefix")
