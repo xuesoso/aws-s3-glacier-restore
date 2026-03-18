@@ -310,9 +310,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-t',
         '--threads',
-        help='Number of threads to use. Default=40',
+        help='Number of threads to use. Default=1',
         type=int,
-        default=40)
+        default=1)
     # Added an option to add a tier number to the command line. Skips prompt
     parser.add_argument(
         '-n',
